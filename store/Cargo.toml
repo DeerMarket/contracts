@@ -1,0 +1,19 @@
+[package]
+name = "store"
+version = "0.0.1"
+authors = [""]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+near-sdk = "4.0.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_with = "1"
+
+[dev-dependencies]
+tokio = { version = "1.21.2", features = ["full"] }
+workspaces = "0.6.0"
+anyhow = "1.0"
+serde_json = { version = "1.0", features = ["arbitrary_precision"] }

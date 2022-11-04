@@ -1,0 +1,17 @@
+{
+  "name": "c",
+  "version": "1.0.0",
+  "license": "(MIT AND Apache-2.0)",
+  "scripts": {
+    "build:store": "./scripts/build.sh store",
+    "unit:store": "cargo test --package store -- --nocapture",
+    "test:store": "cargo test --package store -- --nocapture --test workspaces",
+    "build:store-factory": "./scripts/build.sh store-factory",
+    "unit:store-factory": "cargo test --package store-factory -- --nocapture",
+    "test:store-factory": "cargo test --package store-factory -- --nocapture --test workspaces",
+    "build": "yarn build:store && yarn build:store-factory"
+  },
+  "devDependencies": {
+    "near-cli": "^1.0.0"
+  }
+}

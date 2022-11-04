@@ -1,0 +1,14 @@
+[workspace]
+members = [
+  "fixed-price-contract",
+  "store",
+  "store-factory",
+]
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+debug = true
+panic = "abort"
+overflow-checks = true
