@@ -26,9 +26,9 @@ pub trait Enumeration {
         from_index: Option<U64>,
         limit: Option<U64>,
     ) -> Vec<Order>;
-    fn get_orders_for_buyer(
+    fn get_orders_for_account(
         &self,
-        buyer_id: AccountId,
+        account_id: AccountId,
         from_index: Option<U64>,
         limit: Option<U64>,
     ) -> Vec<Order>;
@@ -107,9 +107,9 @@ impl Enumeration for Contract {
             .collect()
     }
 
-    fn get_orders_for_buyer(
+    fn get_orders_for_account(
         &self,
-        buyer_id: AccountId,
+        account_id: AccountId,
         from_index: Option<U64>,
         limit: Option<U64>,
     ) -> Vec<Order> {
@@ -118,7 +118,7 @@ impl Enumeration for Contract {
 
         //iterate through each item using an iterator
         self.orders_by_account_id
-            .get(&buyer_id)
+            .get(&account_id)
             .unwrap()
             .iter()
             //skip to the index we specified in the start variable

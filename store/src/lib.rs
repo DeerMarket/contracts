@@ -70,11 +70,14 @@ pub enum StorageKey {
 #[near_bindgen]
 impl Contract {
     #[init]
-    pub fn new(owner_id: AccountId, arbiter_id: AccountId, metadata: StoreMetadata) -> Self {
+    pub fn new(owner_id: AccountId, metadata: StoreMetadata) -> Self {
         require!(
             env::is_valid_account_id(owner_id.as_bytes()),
             "Owner's account ID is invalid"
         );
+
+        // overriding arbiter_id currently
+        let arbiter_id: AccountId = "arbiter.testnet".parse().unwrap();
 
         let metadata = StoreMetadata {
             created_at: Some(env::block_timestamp_ms().to_string()),

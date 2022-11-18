@@ -9,7 +9,10 @@
     "build:store-factory": "./scripts/build.sh store-factory",
     "unit:store-factory": "cargo test --package store-factory -- --nocapture",
     "test:store-factory": "cargo test --package store-factory -- --nocapture --test workspaces",
-    "build": "yarn build:store && yarn build:store-factory"
+    "build:dispute": "./scripts/build.sh dispute",
+    "unit:dispute": "cargo test --package dispute -- --nocapture",
+    "test:dispute": "cargo test --package dispute -- --nocapture --test workspaces",
+    "build": "yarn build:store && yarn build:store-factory && yarn build:dispute"
   },
   "devDependencies": {
     "near-cli": "^1.0.0"

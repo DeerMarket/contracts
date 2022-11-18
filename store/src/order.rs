@@ -18,6 +18,7 @@ use crate::*;
 #[serde(crate = "near_sdk::serde")]
 pub enum OrderStatus {
     Pending,
+    Shipped,
     Completed,
     Cancelled,
     Disputed,
@@ -53,6 +54,7 @@ pub trait OrderActions {
     fn item_buy(&mut self, item_id: U64) -> U64;
     fn order_complete(&mut self, order_id: U64) -> Promise;
     fn order_cancel(&mut self, order_id: U64) -> Promise;
+    fn order_shipped(&mut self, order_id: U64) -> Promise;
 }
 
 #[near_bindgen]
@@ -73,6 +75,12 @@ impl OrderActions for Contract {
         require!(
             env::attached_deposit() >= item.price,
             "Not enough deposit to buy this item"
+        );
+
+        // can't buy your own item
+        require!(
+            self.owner_id != env::predecessor_account_id(),
+            "You can't buy your own item"
         );
 
         //create the order
@@ -136,12 +144,41 @@ impl OrderActions for Contract {
         U64(order_id)
     }
 
+    fn order_shipped(&mut self, order_id: U64) -> Promise {
+        //check if order is pending
+        let order = self.orders_by_id.get(&order_id.into()).unwrap();
+        require!(
+            order.status == OrderStatus::Pending,
+            "Order is not pending status"
+        );
+
+        //check if the caller is the owner
+        require!(
+            self.owner_id == env::predecessor_account_id(),
+            "Only the owner can ship the order"
+        );
+
+        //update the order status
+        let mut order = self.orders_by_id.get(&order_id.into()).unwrap();
+        order.status = OrderStatus::Shipped;
+        self.orders_by_id.insert(&order_id.into(), &order);
+
+        // Emit NearEvent
+        NearEvent::order_shipped(OrderShippedData::new(order_id)).emit();
+
+        //return the promise
+        Promise::new(order.buyer_id).transfer(order.amount)
+    }
+
     fn order_complete(&mut self, order_id: U64) -> Promise {
         //get the order
         let mut order = self.orders_by_id.get(&order_id.into()).unwrap();
 
-        //check if order is pending
-        require!(order.status == OrderStatus::Pending, "Order is not pending");
+        //check if order is shipped
+        require!(
+            order.status == OrderStatus::Shipped,
+            "Order is not shipped yet"
+        );
 
         //get the buyer id
         let buyer_id = env::predecessor_account_id();
@@ -169,16 +206,16 @@ impl OrderActions for Contract {
         //get the order
         let mut order = self.orders_by_id.get(&order_id.into()).unwrap();
 
-        //check if order is pending
-        require!(order.status == OrderStatus::Pending, "Order is not pending");
-
         //get the caller id
         let caller_id = env::predecessor_account_id();
 
-        //check if caller is the owner
+        // owner can cancel Shipped and Pending orders
+        // buyer can cancel only Pending orders
         require!(
-            caller_id == self.owner_id,
-            "Only the owner can cancel the order"
+            (order.status == OrderStatus::Pending
+                && (caller_id == self.owner_id || caller_id == order.buyer_id))
+                || (order.status == OrderStatus::Shipped && caller_id == self.owner_id),
+            "Order cannot be cancelled at this stage"
         );
 
         //update the order status

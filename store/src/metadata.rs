@@ -2,9 +2,11 @@
  *  Metadata
  *
  * Methods:
- * - store_metadata
  * - update_store_metadata
  *
+ * - store_metadata
+ * - get_store_owner
+ * - get_store_arbiter
  *
  *
  */
@@ -41,12 +43,22 @@ pub struct StoreMetadata {
 pub trait StoreMetadataProvider {
     //view call for returning the contract metadata
     fn store_metadata(&self) -> StoreMetadata;
+    // get store owner
+    fn get_store_owner(&self) -> AccountId;
+    // get store arbiter
+    fn get_store_arbiter(&self) -> AccountId;
 }
 
 #[near_bindgen]
 impl StoreMetadataProvider for Contract {
     fn store_metadata(&self) -> StoreMetadata {
         self.metadata.get().unwrap()
+    }
+    fn get_store_owner(&self) -> AccountId {
+        self.owner_id.clone()
+    }
+    fn get_store_arbiter(&self) -> AccountId {
+        self.arbiter_id.clone()
     }
 }
 
@@ -67,7 +79,9 @@ impl StoreMetadataManager for Contract {
         let orders = &self.orders_by_id;
         for order in orders.values() {
             assert!(
-                order.status == OrderStatus::Pending || order.status == OrderStatus::Disputed,
+                order.status == OrderStatus::Pending
+                    || order.status == OrderStatus::Shipped
+                    || order.status == OrderStatus::Disputed,
                 "Can't update store metadata while there are active orders or disputes"
             );
         }

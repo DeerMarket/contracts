@@ -1,6 +1,6 @@
 [workspace]
 members = [
-  "fixed-price-contract",
+  "dispute",
   "store",
   "store-factory",
 ]

@@ -103,7 +103,9 @@ impl ItemManager for Contract {
             orders.as_ref().unwrap().iter().for_each(|order_id| {
                 let order = self.orders_by_id.get(&order_id).unwrap();
                 assert!(
-                    order.status == OrderStatus::Pending || order.status == OrderStatus::Disputed,
+                    order.status == OrderStatus::Pending
+                        || order.status == OrderStatus::Disputed
+                        || order.status == OrderStatus::Shipped,
                     "Can't update item while there are active orders or disputes for this item"
                 );
             });
@@ -130,7 +132,9 @@ impl ItemManager for Contract {
             orders.as_ref().unwrap().iter().for_each(|order_id| {
                 let order = self.orders_by_id.get(&order_id).unwrap();
                 assert!(
-                    order.status == OrderStatus::Pending || order.status == OrderStatus::Disputed,
+                    order.status == OrderStatus::Pending
+                        || order.status == OrderStatus::Disputed
+                        || order.status == OrderStatus::Shipped,
                     "Can't update item while there are active orders or disputes for this item"
                 );
             });

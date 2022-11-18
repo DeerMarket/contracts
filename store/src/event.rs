@@ -33,6 +33,7 @@ pub enum Nep297EventKind {
     ItemDelete(ItemDeleteData),
     // order
     ItemBuy(ItemBuyData),
+    OrderShipped(OrderShippedData),
     OrderComplete(OrderCompleteData),
     OrderCancel(OrderCancelData),
     // dispute
@@ -175,6 +176,22 @@ impl ItemBuyData {
 }
 
 /**
+* event: order_shipped
+*/
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OrderShippedData {
+    pub order_id: U64,
+}
+
+impl OrderShippedData {
+    pub fn new(order_id: U64) -> Self {
+        Self { order_id: order_id }
+    }
+}
+
+/**
  * event: order_complete
  */
 
@@ -313,6 +330,10 @@ impl NearEvent {
      */
     pub fn item_buy(data: ItemBuyData) -> Self {
         NearEvent::new_event(Nep297EventKind::ItemBuy(data))
+    }
+
+    pub fn order_shipped(data: OrderShippedData) -> Self {
+        NearEvent::new_event(Nep297EventKind::OrderShipped(data))
     }
 
     pub fn order_complete(data: OrderCompleteData) -> Self {
