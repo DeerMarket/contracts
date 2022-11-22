@@ -35,6 +35,7 @@ pub struct Order {
     pub status: OrderStatus,
     pub starts: u64,
     pub ends: Option<u64>,
+    pub dispute_id: Option<u64>,
 }
 
 pub trait OrderProvider {
@@ -92,8 +93,9 @@ impl OrderActions for Contract {
             status: OrderStatus::Pending,
             starts: env::block_timestamp_ms(),
             ends: None,
+            dispute_id: None,
         };
-
+        
         //save the order
         self.orders_by_id.insert(&order_id, &order);
 

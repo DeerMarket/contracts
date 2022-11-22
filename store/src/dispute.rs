@@ -1,3 +1,5 @@
+use near_sdk::{Gas, PromiseError};
+
 /**
  *  Dispute
  *
@@ -18,13 +20,19 @@ pub enum DisputeResolution {
 }
 
 pub trait DisputeManager {
-    fn start_dispute(&mut self, order_id: U64, description: String);
+    fn start_dispute(&mut self, order_id: U64, description: String) -> Promise;
+    fn start_dispute_callback(
+        &mut self,
+        order_id: U64,
+        new_amount: Balance,
+        call_result: Result<String, PromiseError>,
+    );
     fn dispute_resolve(&mut self, order_id: U64, resolution: DisputeResolution) -> Promise;
 }
 
 #[near_bindgen]
 impl DisputeManager for Contract {
-    fn start_dispute(&mut self, order_id: U64, description: String) {
+    fn start_dispute(&mut self, order_id: U64, description: String) -> Promise {
         //only buyer or owner can start dispute
 
         let order = self.orders_by_id.get(&order_id.into()).unwrap();
@@ -57,24 +65,48 @@ impl DisputeManager for Contract {
         .unwrap();
 
         // cross contract call to arbitration contract (dispute contract)
-        Promise::new(self.arbiter_id.clone()).function_call(
+        let promise = Promise::new(self.arbiter_id.clone()).function_call(
             "create_dispute".to_string(),
             dispute_args,
             arbitrator_amount,
-            env::prepaid_gas() / 2,
+            Gas::ONE_TERA * 10,
         );
 
-        // Maybe below this should be moved to a callback probably
+        // callback to store contract
+        let callback_args: Vec<u8> = near_sdk::serde_json::to_vec(&near_sdk::serde_json::json!({
+            "order_id": order_id,
+            "new_amount": new_amount,
+        }))
+        .expect("Failed to serialize callback args");
 
-        // set order status to disputed
-        self.orders_by_id.insert(
-            &order_id.into(),
-            &Order {
-                status: OrderStatus::Disputed,
-                amount: new_amount,
-                ..order
-            },
-        );
+        return promise.then(Promise::new(env::current_account_id()).function_call(
+            "start_dispute_callback".to_string(),
+            callback_args,
+            0,
+            Gas::ONE_TERA * 10,
+        ));
+    }
+
+    #[private]
+    fn start_dispute_callback(
+        &mut self,
+        order_id: U64,
+        new_amount: Balance,
+        #[callback_result] call_result: Result<String, PromiseError>,
+    ) {
+        // Check if the promise succeeded
+        if call_result.is_err() || !near_sdk::is_promise_success() {
+            env::panic_str("Dispute creation failed..");
+        }
+
+        let dispute_id: u64 = near_sdk::serde_json::from_str(&call_result.unwrap()).unwrap();
+
+        let mut order = self.orders_by_id.get(&order_id.into()).unwrap();
+        order.status = OrderStatus::Disputed;
+        order.amount = new_amount;
+        order.dispute_id = Some(dispute_id);
+
+        self.orders_by_id.insert(&order_id.into(), &order);        
 
         // emit NearEvent
         NearEvent::dispute_start(DisputeStartData::new(order_id)).emit();
@@ -90,7 +122,11 @@ impl DisputeManager for Contract {
         );
 
         //get order
-        let order = self.orders_by_id.get(&order_id.into()).unwrap();
+        let order = self.orders_by_id.get(&order_id.into()).unwrap_or_else(|| {
+            env::panic_str(&format!(
+                "Order does not exist"
+            ))
+        });
 
         //only disputed orders can be resolved
         require!(

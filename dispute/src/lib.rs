@@ -3,6 +3,7 @@
  */
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, UnorderedSet};
+use near_sdk::json_types::U64;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json::{json, to_vec};
 use near_sdk::{
