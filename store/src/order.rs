@@ -54,7 +54,7 @@ pub trait OrderActions {
     fn item_buy(&mut self, item_id: U64) -> U64;
     fn order_complete(&mut self, order_id: U64) -> Promise;
     fn order_cancel(&mut self, order_id: U64) -> Promise;
-    fn order_shipped(&mut self, order_id: U64) -> Promise;
+    fn order_shipped(&mut self, order_id: U64);
 }
 
 #[near_bindgen]
@@ -71,9 +71,9 @@ impl OrderActions for Contract {
         let item = self.items_by_id.get(&item_id.into()).unwrap();
         require!(item.status == ItemStatus::Active, "Item is not available");
 
-        //check if enough attached deposit
+        //check if attached item price + storage cost (0.01 NEAR)
         require!(
-            env::attached_deposit() >= item.price,
+            env::attached_deposit() >= item.price + 10_000_000_000_000_000_000_000,
             "Not enough deposit to buy this item"
         );
 
@@ -144,7 +144,7 @@ impl OrderActions for Contract {
         U64(order_id)
     }
 
-    fn order_shipped(&mut self, order_id: U64) -> Promise {
+    fn order_shipped(&mut self, order_id: U64) {
         //check if order is pending
         let order = self.orders_by_id.get(&order_id.into()).unwrap();
         require!(
@@ -165,9 +165,6 @@ impl OrderActions for Contract {
 
         // Emit NearEvent
         NearEvent::order_shipped(OrderShippedData::new(order_id)).emit();
-
-        //return the promise
-        Promise::new(order.buyer_id).transfer(order.amount)
     }
 
     fn order_complete(&mut self, order_id: U64) -> Promise {

@@ -5,7 +5,7 @@ use near_sdk::collections::{UnorderedMap, UnorderedSet};
 use near_sdk::json_types::{Base58CryptoHash, Base64VecU8, U128};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json::{self, json};
-use near_sdk::{env, near_bindgen, AccountId, CryptoHash, PanicOnDefault, Promise};
+use near_sdk::{env, near_bindgen, AccountId, CryptoHash, PanicOnDefault, Promise, ONE_NEAR};
 
 mod factory_manager;
 use factory_manager::FactoryManager;
@@ -113,15 +113,33 @@ impl StoreFactory {
     /// Deploy a new contract and initialize it with the given arguments.
     #[payable]
     pub fn create(&mut self, name: AccountId, args: Base64VecU8) {
+        // require deposit for the storage cost
+        // TODO: calculate the storage from the contract size
+        let storage_cost_estimate = 3 * ONE_NEAR;
+        assert!(
+            env::attached_deposit() >= storage_cost_estimate,
+            "Not enough attached deposit to cover storage cost"
+        );
         let account_id: AccountId = format!("{}.{}", name, env::current_account_id())
             .parse()
             .unwrap();
+
+        // add owner_id to the args argument
+        let owner_id = serde_json::from_slice::<serde_json::Value>(&args.0)
+            .expect("Failed to deserialize")
+            .get("owner_id")
+            .expect("owner_id not found")
+            .as_str()
+            .expect("owner_id is not a string")
+            .to_string();
+
         let callback_args = serde_json::to_vec(&json!({
             "account_id": account_id,
             "attached_deposit": U128(env::attached_deposit()),
-            "predecessor_account_id": env::predecessor_account_id()
+            "owner_account_id": owner_id
         }))
         .expect("Failed to serialize");
+
         self.factory_manager.create_contract(
             self.get_default_code_hash(),
             account_id,
@@ -138,20 +156,20 @@ impl StoreFactory {
         &mut self,
         account_id: AccountId,
         attached_deposit: U128,
-        predecessor_account_id: AccountId,
+        owner_account_id: AccountId,
     ) -> bool {
         if near_sdk::is_promise_success() {
             self.stores.insert(&account_id);
             let mut stores_for_creator = self
                 .stores_for_creator
-                .get(&predecessor_account_id)
+                .get(&owner_account_id)
                 .unwrap_or_else(|| UnorderedSet::new(b"sc".to_vec()));
             stores_for_creator.insert(&account_id);
             self.stores_for_creator
-                .insert(&predecessor_account_id, &stores_for_creator);
+                .insert(&owner_account_id, &stores_for_creator);
             true
         } else {
-            Promise::new(predecessor_account_id).transfer(attached_deposit.0);
+            Promise::new(owner_account_id).transfer(attached_deposit.0);
             false
         }
     }

@@ -44,6 +44,7 @@ impl DisputeManager for Contract {
 
         // 20% of the funds goes to the arbitrator contract
         let arbitrator_amount = order.amount * 20 / 100;
+        let new_amount = order.amount - arbitrator_amount;
 
         let dispute_args: Vec<u8> = near_sdk::serde_json::to_vec(&near_sdk::serde_json::json!({
             "store_id": env::current_account_id(),
@@ -63,13 +64,14 @@ impl DisputeManager for Contract {
             env::prepaid_gas() / 2,
         );
 
-        // Below this should be moved to a callback probably
+        // Maybe below this should be moved to a callback probably
 
         // set order status to disputed
         self.orders_by_id.insert(
             &order_id.into(),
             &Order {
                 status: OrderStatus::Disputed,
+                amount: new_amount,
                 ..order
             },
         );

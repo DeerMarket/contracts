@@ -9,8 +9,8 @@ async fn deploy() -> anyhow::Result<()> {
         .expect("Failed to start the worker");
 
     // connect to the account
-    let pk: SecretKey = SecretKey::from_str("put private key here")?;
-    let aid: AccountId = AccountId::from_str("deerm.testnet")?;
+    let pk: SecretKey = SecretKey::from_str("")?;
+    let aid: AccountId = AccountId::from_str("dm3.testnet")?;
 
     // let acc = worker.create_tla(aid.clone(), pk.clone()).await?.unwrap();
 
@@ -23,9 +23,9 @@ async fn deploy() -> anyhow::Result<()> {
         .await?
         .unwrap();
 
-    let res = contract.call("new").max_gas().transact().await.unwrap();
+    // let res = contract.call("new").max_gas().transact().await.unwrap();
 
-    assert!(res.is_success());
+    // assert!(res.is_success());
 
     println!("----------------------------------------");
     println!("Factory account: {}", contract.as_account().id());

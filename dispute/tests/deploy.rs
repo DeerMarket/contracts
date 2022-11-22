@@ -8,8 +8,8 @@ async fn deploy() -> anyhow::Result<()> {
         .expect("Failed to start the worker");
 
     // connect to the account
-    let pk: SecretKey = SecretKey::from_str("put private key here")?;
-    let aid: AccountId = AccountId::from_str("arbiter.testnet")?;
+    let pk: SecretKey = SecretKey::from_str("")?;
+    let aid: AccountId = AccountId::from_str("ddd3.testnet")?;
 
     // let acc = worker.create_tla(aid.clone(), pk.clone()).await?.unwrap();
     // acc.clone()
@@ -46,7 +46,7 @@ async fn whitelist() -> anyhow::Result<()> {
         .await
         .expect("Failed to start the worker");
 
-    let pk: SecretKey = SecretKey::from_str("put private key here")?;
+    let pk: SecretKey = SecretKey::from_str("ed25519:ujrmKjeaxhWNbb25gUrzYmLstepJY5zCvyEvhiv1FG5xtotLGo8oE1RwDAnosnQS7DVLwwJuTsTMMkhJ1zDpxW6")?;
     let aid: AccountId = AccountId::from_str("arbiter.testnet")?;
 
     let acc = worker.create_tla(aid.clone(), pk.clone()).await?.unwrap();

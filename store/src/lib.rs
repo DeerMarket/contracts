@@ -77,7 +77,7 @@ impl Contract {
         );
 
         // overriding arbiter_id currently
-        let arbiter_id: AccountId = "arbiter.testnet".parse().unwrap();
+        let arbiter_id: AccountId = "ddd3.testnet".parse().unwrap();
 
         let metadata = StoreMetadata {
             created_at: Some(env::block_timestamp_ms().to_string()),

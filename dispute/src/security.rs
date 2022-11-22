@@ -39,10 +39,10 @@ impl Default for Config {
             owner_id: env::predecessor_account_id(),
             participation_stake: 10000000000000000000000, // 10 NEAR
             // pending_period: 86400,                        // 1 day
-            pending_period: 60,            // 1 minute
+            pending_period: 180,           // 3 minute
             voting_period: 604800,         // 7 days
             min_fee: 20000000000000000000, // 0.2 NEAR
-            votes_per_near: 2,             // 2 vote per 1 NEAR
+            votes_per_near: 1,             // 1 vote per 1 NEAR
             max_votes: 1000,               // 1000 votes
         }
     }

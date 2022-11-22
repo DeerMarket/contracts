@@ -119,11 +119,13 @@ impl DisputeInterface for Contract {
             required_votes
         };
 
+        let estimate_storage_cost: Balance = 40_000_000_000_000_000_000_000; // 0.01 NEAR
+
         let id = self.disputes_by_id.len() as u64;
         let dispute = Dispute::new(
             id,
             env::signer_account_id(),
-            env::attached_deposit(),
+            env::attached_deposit() - estimate_storage_cost,
             required_votes as u64,
             store_id,
             item_id,
@@ -206,6 +208,7 @@ impl DisputeInterface for Contract {
             .collect()
     }
 
+    // TODO: divide this into a callback
     #[private]
     fn resolve_dispute(&mut self, dispute_id: u64) {
         let dispute = self.disputes_by_id.get(&dispute_id).unwrap();

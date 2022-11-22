@@ -65,11 +65,20 @@ pub trait ItemManager {
 
 #[near_bindgen]
 impl ItemManager for Contract {
+    #[payable]
     fn item_create(&mut self, price: U128, metadata: ItemMetadata) -> U64 {
         assert_eq!(
             env::predecessor_account_id(),
             self.owner_id,
             "Only owner can create a item"
+        );
+        assert!(
+            env::attached_deposit() >= 50_000_000_000_000_000_000_000,
+            "Attached deposit must be at least 0.05 NEAR to cover storage costs"
+        );
+        assert!(
+            price >= U128(1_000_000_000_000_000_000_000_000),
+            "Minimum price is 1 NEAR"
         );
         let item_id = self.items_metadata_by_id.len();
         let item = Item {

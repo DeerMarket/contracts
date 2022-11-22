@@ -50,6 +50,7 @@ pub struct Contract {
     pub evidence_by_dispute_id: LookupMap<u64, UnorderedSet<Evidence>>,
 }
 
+// TODO: Secure against contract funds being drained by malicious calls
 #[near_bindgen]
 impl Contract {
     #[init]

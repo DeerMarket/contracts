@@ -13,9 +13,19 @@ fn storage_to_near(bytes_storage: u128) -> f64 {
     (bytes_storage as f64) / (100_000.0)
 }
 
+fn generate_text(length: usize) -> String {
+    let mut text = String::new();
+    for _ in 0..length {
+        text.push('a');
+    }
+    text
+}
+
 #[tokio::test]
 async fn test_methods_cost() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox().await?;
+    let worker = workspaces::testnet()
+        .await
+        .expect("Failed to start the worker");
     let account = worker.dev_create_account().await?;
     let account2 = worker.dev_create_account().await?;
     println!("----------------------------------------");
@@ -39,11 +49,19 @@ async fn test_methods_cost() -> anyhow::Result<()> {
         .call(&account.id(), "new")
         .args_json(&json!({
         "owner_id": account.id(),
-        "arbiter_id": "bob.near",
         "metadata": {
-            "name": "Item Store",
-            "description": "A store for selling items",
-            "categories": ["Music", "Art"],
+            "name": generate_text(100),
+            "category": 1,
+            "description": generate_text(1000),
+            "logo": generate_text(100),
+            "cover": generate_text(100),
+            "website": generate_text(100),
+            "email": generate_text(100),
+            "phone": generate_text(100),
+            "terms": generate_text(1000),
+            "tags": [generate_text(10), generate_text(10)],
+            "created_at": generate_text(11),
+            "updated_at": generate_text(11),
         }}))
         .max_gas()
         .transact()
@@ -64,11 +82,12 @@ async fn test_methods_cost() -> anyhow::Result<()> {
         .call(&account.id(), "item_create")
         .args_json(&json!({
             "metadata": {
-                "name": "Item 1: Emote commission (48h) - 10$ - 1 emote",
-                "description": "For 10$ I'll make 1 original and costumized emote for you in only 48h! I will draw anything except mecha.Just send me a message explaining me what you want, a reference image to get an idea of how your character is or even a picture of the expression or pose you're looking for!Sizes delivered:Original emote size (800x800).Twitch sizes (112x112, 56x56 and 28x28).Custom size (you can tell me the sizes you need!)These will be sent in .png unless you need any other format or a simple background.If you have any questions feel free to send me a private message and I'll gladly reply!",
-                "categories": ["Art", "Emotes"],
+                "title": generate_text(100),
+                "description": generate_text(1000),
+                "images": [generate_text(100), generate_text(100)],
+                "tags": [generate_text(10), generate_text(10), generate_text(10), generate_text(10)],
             },
-            "price": ONE_NEAR,
+            "price": ONE_NEAR.to_string(),
         }))
         .max_gas()
         .transact()
@@ -88,7 +107,7 @@ async fn test_methods_cost() -> anyhow::Result<()> {
     let res = account2
         .call(&account.id(), "item_buy")
         .args_json(&json!({
-            "item_id": 0,
+            "item_id": "0",
         }))
         .deposit(ONE_NEAR)
         .max_gas()
@@ -104,16 +123,17 @@ async fn test_methods_cost() -> anyhow::Result<()> {
         storage_to_near(u128::from(buy_storage))
     );
 
-    println!("--------------- ORDER COMPLETE ---------------");
+    println!("--------------- ORDER CANCEL ---------------");
     let storage_before = account.view_account().await?.storage_usage;
     let res = account2
-        .call(&account.id(), "order_complete")
+        .call(&account.id(), "order_cancel")
         .args_json(&json!({
-            "order_id": 0,
+            "order_id": "0",
         }))
         .max_gas()
         .transact()
         .await?;
+    println!("res: {:?}", res);
     assert!(res.is_success());
     let storage_after = account.view_account().await?.storage_usage;
     let complete_cost = gas_to_near(Gas(res.total_gas_burnt));
@@ -124,47 +144,47 @@ async fn test_methods_cost() -> anyhow::Result<()> {
         storage_to_near(u128::from(complete_storage))
     );
 
-    println!("--------------- REVIEW ITEM ---------------");
-    let storage_before = account.view_account().await?.storage_usage;
-    let res = account2
-        .call(&account.id(), "item_review")
-        .args_json(&json!({
-            "item_id": 0,
-            "rating": 5,
-            "comment": "Great work! I'll definitely order again!"
-        }))
-        .max_gas()
-        .transact()
-        .await?;
-    assert!(res.is_success());
-    let storage_after = account.view_account().await?.storage_usage;
-    let review_cost = gas_to_near(Gas(res.total_gas_burnt));
-    let review_storage = storage_after - storage_before;
-    println!("gas cost: {} NEAR", review_cost);
-    println!(
-        "storage cost: {} NEAR",
-        storage_to_near(u128::from(review_storage))
-    );
+    // println!("--------------- REVIEW ITEM ---------------");
+    // let storage_before = account.view_account().await?.storage_usage;
+    // let res = account2
+    //     .call(&account.id(), "item_review")
+    //     .args_json(&json!({
+    //         "item_id": "0",
+    //         "rating": 5,
+    //         "comment": "Great work! I'll definitely order again!"
+    //     }))
+    //     .max_gas()
+    //     .transact()
+    //     .await?;
+    // assert!(res.is_success());
+    // let storage_after = account.view_account().await?.storage_usage;
+    // let review_cost = gas_to_near(Gas(res.total_gas_burnt));
+    // let review_storage = storage_after - storage_before;
+    // println!("gas cost: {} NEAR", review_cost);
+    // println!(
+    //     "storage cost: {} NEAR",
+    //     storage_to_near(u128::from(review_storage))
+    // );
 
-    println!("---------------------------------------------------");
-    println!("--------------- STORAGE ESTIMATIONS ---------------");
+    // println!("---------------------------------------------------");
+    // println!("--------------- STORAGE ESTIMATIONS ---------------");
 
-    println!(
-        "Contract deploy: {} NEAR",
-        storage_to_near(u128::from(first_storage))
-    );
-    println!(
-        "10 ITEMS: {} NEAR",
-        storage_to_near(u128::from(10 * item_storage))
-    );
-    println!(
-        "1000 ORDERS: {} NEAR",
-        storage_to_near(u128::from(1000 * buy_storage))
-    );
-    println!(
-        "1000 REVIEWS: {} NEAR",
-        storage_to_near(u128::from(1000 * review_storage))
-    );
+    // println!(
+    //     "Contract deploy: {} NEAR",
+    //     storage_to_near(u128::from(first_storage))
+    // );
+    // println!(
+    //     "10 ITEMS: {} NEAR",
+    //     storage_to_near(u128::from(10 * item_storage))
+    // );
+    // println!(
+    //     "1000 ORDERS: {} NEAR",
+    //     storage_to_near(u128::from(1000 * buy_storage))
+    // );
+    // println!(
+    //     "1000 REVIEWS: {} NEAR",
+    //     storage_to_near(u128::from(1000 * review_storage))
+    // );
 
     println!("---------------------------------------------------");
 
