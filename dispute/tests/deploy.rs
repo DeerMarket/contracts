@@ -9,7 +9,7 @@ async fn deploy() -> anyhow::Result<()> {
 
     // connect to the account
     let pk: SecretKey = SecretKey::from_str("")?;
-    let aid: AccountId = AccountId::from_str("ddd3.testnet")?;
+    let aid: AccountId = AccountId::from_str("ddd5.testnet")?;
 
     // let acc = worker.create_tla(aid.clone(), pk.clone()).await?.unwrap();
     // acc.clone()
@@ -25,9 +25,9 @@ async fn deploy() -> anyhow::Result<()> {
     let res = contract.call("new").max_gas().transact().await.unwrap();
     assert!(res.is_success());
 
-    // acc.call(&aid, "whitelist")
+    // contract.call("force_resolve_dispute")
     //     .args_json(&serde_json::json!({
-    //         "account_id": "hhhhhhhhhhhhhhh.testnet"
+    //         "dispute_id": 1
     //     }))
     //     .max_gas()
     //     .transact()
