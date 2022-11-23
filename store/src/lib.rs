@@ -2,7 +2,7 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, UnorderedSet};
 use near_sdk::json_types::{U128, U64};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, near_bindgen, require, AccountId, Balance, PanicOnDefault, Promise};
+use near_sdk::{env, near_bindgen, require, AccountId, Balance, Gas, PanicOnDefault, Promise};
 
 mod dispute;
 mod enumeration;
@@ -112,6 +112,56 @@ impl Contract {
         NearEvent::store_create(StoreCreateData::new(owner_id, arbiter_id, metadata)).emit();
 
         this
+    }
+
+    // Delete the contract and refund remaining balance to the owner.
+    pub fn delete_self(&mut self) {
+        require!(
+            env::predecessor_account_id() == self.owner_id,
+            "Can only be called by the owner"
+        );
+
+        let orders = &self.orders_by_id;
+        for order in orders.values() {
+            require!(
+                order.status == OrderStatus::Pending
+                    || order.status == OrderStatus::Shipped
+                    || order.status == OrderStatus::Disputed,
+                "Can't delete store with orders in progress"
+            );
+        }
+
+        env::storage_remove(&StorageKey::StoreMetadata.try_to_vec().unwrap());
+        env::storage_remove(&StorageKey::ItemsById.try_to_vec().unwrap());
+        env::storage_remove(&StorageKey::ItemsMetadataById.try_to_vec().unwrap());
+        env::storage_remove(&StorageKey::OrdersById.try_to_vec().unwrap());
+        env::storage_remove(&StorageKey::OrdersByAccountId.try_to_vec().unwrap());
+        env::storage_remove(&StorageKey::OrdersByItemId.try_to_vec().unwrap());
+        env::storage_remove(&StorageKey::ReviewsById.try_to_vec().unwrap());
+        env::storage_remove(&StorageKey::ReviewsByAccountId.try_to_vec().unwrap());
+        env::storage_remove(&StorageKey::ReviewsByItemId.try_to_vec().unwrap());
+
+        // Emit a NearEvent
+        NearEvent::store_delete().emit();
+
+        let factory_id: AccountId = env::current_account_id()
+            .as_str()
+            .split('.')
+            .collect::<Vec<&str>>()[1..]
+            .join(".")
+            .parse()
+            .unwrap();
+
+        // call factory to delete the store
+        let cb_args: Vec<u8> = near_sdk::serde_json::to_vec(&near_sdk::serde_json::json!({
+            "store_id": env::current_account_id(),
+            "owner_id": self.owner_id,
+        }))
+        .unwrap();
+
+        Promise::new(env::current_account_id()).delete_account(self.owner_id.clone());
+
+        Promise::new(factory_id).function_call("remove".to_string(), cb_args, 0, Gas::ONE_TERA * 5);
     }
 }
 

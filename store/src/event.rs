@@ -27,6 +27,7 @@ pub enum Nep297EventKind {
     // store
     StoreCreate(StoreCreateData),
     StoreUpdate(StoreUpdateData),
+    StoreDelete(),
     // item
     ItemCreate(ItemCreateData),
     ItemUpdate(ItemUpdateData),
@@ -308,6 +309,10 @@ impl NearEvent {
 
     pub fn store_update(data: StoreUpdateData) -> Self {
         NearEvent::new_event(Nep297EventKind::StoreUpdate(data))
+    }
+
+    pub fn store_delete() -> Self {
+        NearEvent::new_event(Nep297EventKind::StoreDelete())
     }
 
     /**
