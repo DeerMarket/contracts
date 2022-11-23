@@ -2,7 +2,7 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, UnorderedSet};
 use near_sdk::json_types::{U128, U64};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, near_bindgen, require, AccountId, Balance, Gas, PanicOnDefault, Promise};
+use near_sdk::{env, near_bindgen, require, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseError};
 
 mod dispute;
 mod enumeration;
@@ -77,7 +77,7 @@ impl Contract {
         );
 
         // overriding arbiter_id currently
-        let arbiter_id: AccountId = "ddd5.testnet".parse().unwrap();
+        let arbiter_id: AccountId = "ddd7.testnet".parse().unwrap();
 
         let metadata = StoreMetadata {
             created_at: Some(env::block_timestamp_ms().to_string()),

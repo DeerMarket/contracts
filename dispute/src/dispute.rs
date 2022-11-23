@@ -1,5 +1,3 @@
-use near_sdk::{PromiseError, ONE_YOCTO};
-
 /**
  *
  * methods:
