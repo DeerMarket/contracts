@@ -12,7 +12,10 @@
     "build:dispute": "./scripts/build.sh dispute",
     "unit:dispute": "cargo test --package dispute -- --nocapture",
     "test:dispute": "cargo test --package dispute -- --nocapture --test workspaces",
-    "build": "yarn build:store && yarn build:store-factory && yarn build:dispute"
+    "build": "yarn build:store && yarn build:store-factory && yarn build:dispute",
+
+    "deploy": "./scripts/deploy.sh",
+    "devdeploy": "./scripts/devdeploy.sh"
   },
   "devDependencies": {
     "near-cli": "^1.0.0"
