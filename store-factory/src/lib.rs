@@ -160,10 +160,13 @@ impl StoreFactory {
     ) -> bool {
         if near_sdk::is_promise_success() {
             self.stores.insert(&account_id);
+
             let mut stores_for_creator = self
                 .stores_for_creator
                 .get(&owner_account_id)
-                .unwrap_or_else(|| UnorderedSet::new(b"sc".to_vec()));
+                .unwrap_or_else(|| {
+                    UnorderedSet::new(format!("sc{}", owner_account_id).as_bytes().to_vec())
+                });
             stores_for_creator.insert(&account_id);
             self.stores_for_creator
                 .insert(&owner_account_id, &stores_for_creator);
@@ -189,7 +192,7 @@ impl StoreFactory {
             .update_contract(account_id, code_hash, "update");
     }
 
-    /// Removes the store from the factory 
+    /// Removes the store from the factory
     pub fn remove(&mut self, store_id: AccountId, owner_id: AccountId) {
         let caller_id = env::predecessor_account_id();
         assert!(
